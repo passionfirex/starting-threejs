@@ -22,12 +22,13 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.03
 
+const loader = new THREE.TextureLoader();
+
 // adding balls 
 function addCircle(posx, posz) {
     const geo = new THREE.IcosahedronGeometry(1.0, 2);
     const mat = new THREE.MeshStandardMaterial({
-        color: 0xffffff,
-        flatShading: true
+        map: loader.load("./textures/earthmap1k.jpg"),
     });
     const ball = new THREE.Mesh(geo, mat);
     ball.position.x = posx;
@@ -37,12 +38,12 @@ function addCircle(posx, posz) {
     scene.add(ball);
 };
 
-let ball = addCircle(THREE.MathUtils.randFloatSpread(20), THREE.MathUtils.randFloatSpread(20));
+let ball = addCircle(5, 0);
 
 
 function addFloor() {
     let geometry = new THREE.BoxGeometry(50, 1, 50);
-    let material = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0 });
+    let material = new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0 });
     const floor = new THREE.Mesh(geometry, material);
     floor.position.set(0, -10, 0);
     floor.name = 'my-floor';
@@ -50,7 +51,7 @@ function addFloor() {
 }
 addFloor();
 
-const hemiLight = new THREE.HemisphereLight(0x6f6af7, 0x4bfac3);
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0x000000);
 scene.add(hemiLight);
 
 
