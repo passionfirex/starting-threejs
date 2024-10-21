@@ -101,33 +101,41 @@ let bounceDistance = 4;
 const stars = getStarfield({ numStars: 1000, sprite: starSprite });
 scene.add(stars);
 
+let moving = true;
+document.addEventListener('click', () => {
+    moving = !moving;
+    console.log(moving);
+});
+
 function animate() {
     requestAnimationFrame(animate);
+    if (moving) {
+        sun.rotateY(0.004);
+        mercury.mesh.rotateY(0.004);
+        venus.mesh.rotateY(0.002);
+        earth.mesh.rotateY(0.02);
+        mars.mesh.rotateY(0.018);
+        jupiter.mesh.rotateY(0.04);
+        saturn.mesh.rotateY(0.038);
+        uranus.mesh.rotateY(0.03);
+        neptune.mesh.rotateY(0.032);
 
-    sun.rotateY(0.004);
-    mercury.mesh.rotateY(0.004);
-    venus.mesh.rotateY(0.002);
-    earth.mesh.rotateY(0.02);
-    mars.mesh.rotateY(0.018);
-    jupiter.mesh.rotateY(0.04);
-    saturn.mesh.rotateY(0.038);
-    uranus.mesh.rotateY(0.03);
-    neptune.mesh.rotateY(0.032);
+        //Around-sun-rotation
+        mercury.obj.rotateY(0.04);
+        venus.obj.rotateY(0.015);
+        earth.obj.rotateY(0.01);
+        mars.obj.rotateY(0.008);
+        jupiter.obj.rotateY(0.002);
+        saturn.obj.rotateY(0.0009);
+        uranus.obj.rotateY(0.0004);
+        neptune.obj.rotateY(0.0001);
 
-    //Around-sun-rotation
-    mercury.obj.rotateY(0.04);
-    venus.obj.rotateY(0.015);
-    earth.obj.rotateY(0.01);
-    mars.obj.rotateY(0.008);
-    jupiter.obj.rotateY(0.002);
-    saturn.obj.rotateY(0.0009);
-    uranus.obj.rotateY(0.0004);
-    neptune.obj.rotateY(0.0001);
+        camera.lookAt(11, -3, 0);
 
-    camera.lookAt(11, -3, 0);
-
-    renderer.render(scene, camera);
-    controls.update();
+        renderer.render(scene, camera);
+        controls.update();
+    }
 }
+
 
 animate();
