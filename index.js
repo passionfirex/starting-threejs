@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { OrbitControls } from "jsm/controls/OrbitControls.js";
+import getStarfield from "./getStarfield.js";
 
 const w = window.innerWidth;
 const h = window.innerHeight;
@@ -8,64 +9,86 @@ renderer.setSize(w, h);
 
 document.body.appendChild(renderer.domElement);
 
-// creating scene & camera
 const fov = 75;
 const aspect = w / h;
 const near = 0.1;
-const far = 50;
+const far = 200;
 const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-camera.position.set(11, -3, 20);
+camera.position.set(40, 15, 40);
 
 const axesHelper = new THREE.AxesHelper(5);
 
 const scene = new THREE.Scene();
+// scene.add(axesHelper);
 
-// zscene.add(axesHelper);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.03
 
 const loader = new THREE.TextureLoader();
+const starSprite = loader.load("./textures/circle.png");
 
-function addCircle(posx, posz, texture, name, bounceDistance, size) {
+const sunGeo = new THREE.SphereGeometry(11, 30, 30);
+const sunMat = new THREE.MeshBasicMaterial({
+    map: loader.load("./textures/sun map.png"),
+})
+const sun = new THREE.Mesh(sunGeo, sunMat);
+scene.add(sun);
+
+function addCircle(position, texture, size, ring) {
     const geo = new THREE.IcosahedronGeometry(size, 6);
     const mat = new THREE.MeshStandardMaterial({
         map: loader.load(texture),
     });
-    const ball = new THREE.Mesh(geo, mat);
-    ball.position.x = posx;
-    ball.position.z = posz;
-    ball.position.y = 0;
-    ball.name = name;  // Use the passed-in name parameter
-    scene.add(ball);
-
-    // Calculate initial speed and time counter for this ball
-    const acceleration = 9.8;
-    const timeCounter = Math.sqrt(bounceDistance * 2 / acceleration);
-    const initSpeed = acceleration * timeCounter;
-
-    // Return ball with its unique bounce data
+    const mesh = new THREE.Mesh(geo, mat);
+    const obj = new THREE.Object3D();
+    obj.add(mesh);
+    if (ring) {
+        const ringGeo = new THREE.RingGeometry(
+            ring.innerRadius,
+            ring.outerRadius,
+            32);
+        const ringMat = new THREE.MeshBasicMaterial({
+            map: loader.load(ring.texture),
+            side: THREE.DoubleSide
+        });
+        const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+        obj.add(ringMesh);
+        ringMesh.position.x = position;
+        ringMesh.rotation.x = -0.5 * Math.PI;
+    }
+    scene.add(obj);
+    mesh.position.x = position;
     return {
-        ball,
-        bounceDistance,
-        initSpeed,
-        timeCounter,
-        timeStep: 0.02,
-        bottomPositionY: -8
+        mesh, obj
     };
 };
 
-let balls = [
-    addCircle(-7, 0, "./textures/mercurymap.jpg", 'mercury', 5, 1),
-    addCircle(-3, 0, "./textures/venusmap.jpg", 'venus', 4, 1.2),
-    addCircle(1, 0, "./textures/earthmap1k.jpg", 'earth', 5, 1.5),
-    addCircle(6, 0, "./textures/mars_1k_color.jpg", 'mars', 3, 1.5),
-    addCircle(13, 0, "./textures/jupitermap.jpg", 'jupiter', 2, 3),
-    addCircle(21, 0, "./textures/saturnmap.jpg", 'saturn', 4, 2.3),
-    addCircle(28, 0, "./textures/uranusmap.jpg", 'uranus', 6, 1.4),
-    addCircle(33, 0, "./textures/neptunemap.jpg", 'neptune', 3, 1.4),
+const mercury = addCircle(19, "./textures/mercurymap.jpg", 1);
+const venus = addCircle(23, "./textures/venusmap.jpg", 1.2);
+const earth = addCircle(27, "./textures/earthmap1k.jpg", 1.5);
+const mars = addCircle(35, "./textures/mars_1k_color.jpg", 1.5);
+const jupiter = addCircle(44, "./textures/jupitermap.jpg", 3);
+const saturn = addCircle(52, "./textures/saturnmap.jpg", 2.3, {
+    innerRadius: 2.9,
+    outerRadius: 4.2,
+    texture: "./textures/saturn ring.png"
+});
+const uranus = addCircle(57, "./textures/uranusmap.jpg", 1.4, {
+    innerRadius: 1.6,
+    outerRadius: 1.9,
+    texture: "./textures/uranus ring.png"
+});
+const neptune = addCircle(62, "./textures/neptunemap.jpg", 1.4,);
 
-];
+
+const saturnRingGeo = new THREE.RingGeometry(10, 20, 32);
+const saturnRingMat = new THREE.MeshStandardMaterial({
+    map: loader.load("./textures/saturn ring.png"),
+    side: THREE.DoubleSide,
+});
+const saturnRing = new THREE.Mesh(saturnRingGeo, saturnRingMat);
+
 
 const hemiLight = new THREE.HemisphereLight(0xffffff, 0x000000);
 scene.add(hemiLight);
@@ -75,20 +98,31 @@ scene.add(hemiLight);
 let acceleration = 9.8;
 let bounceDistance = 4;
 
+const stars = getStarfield({ numStars: 1000, sprite: starSprite });
+scene.add(stars);
+
 function animate() {
     requestAnimationFrame(animate);
 
-    // Update each ball individually
-    balls.forEach((ballData) => {
-        const { ball, initSpeed, timeStep, bottomPositionY } = ballData;
+    sun.rotateY(0.004);
+    mercury.mesh.rotateY(0.004);
+    venus.mesh.rotateY(0.002);
+    earth.mesh.rotateY(0.02);
+    mars.mesh.rotateY(0.018);
+    jupiter.mesh.rotateY(0.04);
+    saturn.mesh.rotateY(0.038);
+    uranus.mesh.rotateY(0.03);
+    neptune.mesh.rotateY(0.032);
 
-        if (ball.position.y < bottomPositionY) {
-            ballData.timeCounter = 0;  // Reset bounce
-        }
-
-        ball.position.y = bottomPositionY + initSpeed * ballData.timeCounter - 0.5 * 9.8 * ballData.timeCounter * ballData.timeCounter;
-        ballData.timeCounter += timeStep;  // Update time for next frame
-    });
+    //Around-sun-rotation
+    mercury.obj.rotateY(0.04);
+    venus.obj.rotateY(0.015);
+    earth.obj.rotateY(0.01);
+    mars.obj.rotateY(0.008);
+    jupiter.obj.rotateY(0.002);
+    saturn.obj.rotateY(0.0009);
+    uranus.obj.rotateY(0.0004);
+    neptune.obj.rotateY(0.0001);
 
     camera.lookAt(11, -3, 0);
 
